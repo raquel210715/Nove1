@@ -4,24 +4,36 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>App Hàbits Saludables</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Open+Sans&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
-    h2 { margin-top: 10px; }
-    .habit { display: flex; align-items: center; justify-content: center; margin: 10px; }
-    .circle { width: 25px; height: 25px; border: 2px solid #333; border-radius: 50%; margin-right: 10px; cursor: pointer; }
-    .filled { background-color: #4caf50; }
-    .boxes { display: flex; justify-content: space-around; margin-top: 20px; }
-    .box { width: 70px; height: 70px; border: 2px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    body { font-family: 'Open Sans', sans-serif; margin:0; padding:0; text-align:center; }
+    h2 { margin-top: 15px; }
+    .habit { display:flex; align-items:center; justify-content:center; margin:10px; }
+    .circle { width:25px; height:25px; border-radius:50%; margin-right:10px; cursor:pointer; border:2px solid #333; }
+    .filled { opacity:1; }
+    .boxes { display:flex; justify-content:space-around; margin-top:20px; }
+    .box { width:70px; height:70px; border:2px solid #333; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-direction:column; }
+    #ta-popup { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; padding:20px; border:2px solid #333; border-radius:10px; z-index:1000; }
+    #ta-popup input { display:block; margin:5px auto; width:60px; }
+    #ta-popup button { margin-top:10px; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
   <h2 id="today-date"></h2>
 
-  <div class="habit"><div class="circle" data-habit="aigua"></div> Beure 2L d'aigua</div>
-  <div class="habit"><div class="circle" data-habit="fruites"></div> Menjar 5 fruites o verdures</div>
-  <div class="habit"><div class="circle" data-habit="passeig"></div> Fer un passeig</div>
-  <div class="habit"><div class="circle" data-habit="dormir"></div> Dormir 8 hores</div>
+  <div class="habit">
+    <div class="circle" data-color="groc" style="background-color:#f5ea16;"></div> Exercici
+  </div>
+  <div class="habit">
+    <div class="circle" data-color="verd" style="background-color:#119a48;"></div> Prendre medicació
+  </div>
+  <div class="habit">
+    <div class="circle" data-color="blau" style="background-color:#3954a3;"></div> Menjar 5 fruites o verdures
+  </div>
+  <div class="habit">
+    <div class="circle" data-color="lila" style="background-color:#c5278e;"></div> Caminar 8000 passes
+  </div>
 
   <div class="boxes">
     <div class="box" id="box-ta">TA</div>
@@ -30,83 +42,128 @@
     <div class="box" id="box-reset">🔄</div>
   </div>
 
+  <!-- TA popup -->
+  <div id="ta-popup">
+    <h3>Registra TA</h3>
+    <input type="number" id="ta-sist" placeholder="Sistòlica">
+    <input type="number" id="ta-dias" placeholder="Diastòlica">
+    <input type="number" id="ta-fc" placeholder="Freq. Cardíaca">
+    <input type="file" id="ta-foto" accept="image/*" capture="camera">
+    <button id="ta-save">Guardar</button>
+    <button id="ta-close">Tancar</button>
+  </div>
+
   <script>
-  // --- Inicialitzar EmailJS (posa la teva publicKey aquí) ---
-  (function(){
-    emailjs.init("Ii-pS-x9zkGqnawB7"); 
-  })();
+    // Inicialització EmailJS
+    emailjs.init("Ii-pS-x9zkGqnawB7"); // <-- Posa aquí la teva public key entre cometes
 
-  // --- Demanar dades usuària ---
-  const userEmail = prompt("Introdueix el teu email:");
-  const userCode = prompt("Introdueix el teu codi de la usuària:");
+    const circles = document.querySelectorAll('.circle');
+    const todayDate = document.getElementById('today-date');
+    const boxTA = document.getElementById('box-ta');
+    const boxExercici = document.getElementById('box-exercici');
+    const boxEmail = document.getElementById('box-email');
+    const boxReset = document.getElementById('box-reset');
 
-  // --- Mostrar data ---
-  const dateEl = document.getElementById("today-date");
-  const today = new Date();
-  const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
-  dateEl.textContent = today.toLocaleDateString("ca-ES", options);
+    const taPopup = document.getElementById('ta-popup');
+    const taClose = document.getElementById('ta-close');
+    const taSave = document.getElementById('ta-save');
+    const taSist = document.getElementById('ta-sist');
+    const taDias = document.getElementById('ta-dias');
+    const taFC = document.getElementById('ta-fc');
+    const taFoto = document.getElementById('ta-foto');
 
-  // --- Hàbits ---
-  const circles = document.querySelectorAll(".circle");
-  circles.forEach(circle => {
-    circle.addEventListener("click", () => {
-      circle.classList.toggle("filled");
-    });
-  });
+    const avui = new Date();
+    todayDate.textContent = avui.toLocaleDateString('ca-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 
-  // --- Variables per guardar dades ---
-  let taValor = "";
-  
-  // --- TA ---
-  document.getElementById("box-ta").addEventListener("click", () => {
-    const valor = prompt("Introdueix la teva pressió arterial (TA):");
-    if (valor) {
-      taValor = valor;
-      alert("Has desat la TA: " + valor);
-    }
-  });
+    let habitData = JSON.parse(localStorage.getItem('habitData') || '{}');
+    let taData = JSON.parse(localStorage.getItem('taData') || '{}');
 
-  // --- Exercici ---
-  document.getElementById("box-exercici").addEventListener("click", () => {
-    alert("Aquí pots enllaçar el teu PDF d’exercicis 💪");
-  });
-
-  // --- Enviar ---
-  document.getElementById("box-email").addEventListener("click", () => {
-    const habitsStatus = {};
-    circles.forEach(c => {
-      habitsStatus[c.dataset.habit] = c.classList.contains("filled") ? "✔️" : "❌";
-    });
-
-    const templateParams = {
-      email: userEmail,
-      codi: userCode,
-      data: today.toLocaleDateString("ca-ES", options),
-      aigua: habitsStatus.aigua,
-      fruites: habitsStatus.fruites,
-      passeig: habitsStatus.passeig,
-      dormir: habitsStatus.dormir,
-      ta: taValor || "No registrada"
-    };
-
-    emailjs.send("service_lb2ga98","template_0f6celw", templateParams)
-      .then(() => {
-        alert("Dades enviades correctament ✅");
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        alert("Error en enviar ❌");
+    // Marcar hàbit
+    circles.forEach(circle => {
+      const color = circle.getAttribute('data-color');
+      circle.addEventListener('click', () => {
+        habitData[color] = !habitData[color];
+        circle.classList.toggle('filled', habitData[color]);
+        localStorage.setItem('habitData', JSON.stringify(habitData));
       });
-  });
+      if(habitData[color]) circle.classList.add('filled');
+    });
 
-  // --- Reiniciar ---
-  document.getElementById("box-reset").addEventListener("click", () => {
-    if (confirm("Segur que vols reiniciar tots els hàbits i dades?")) {
-      circles.forEach(c => c.classList.remove("filled"));
-      taValor = "";
-      alert("App reiniciada 🔄");
+    // Popup TA
+    boxTA.addEventListener('click', () => {
+      taPopup.style.display = 'block';
+      if(taData.sist) taSist.value = taData.sist;
+      if(taData.dias) taDias.value = taData.dias;
+      if(taData.fc) taFC.value = taData.fc;
+    });
+    taClose.addEventListener('click', () => taPopup.style.display = 'none');
+    taSave.addEventListener('click', () => {
+      taData = {
+        sist: taSist.value,
+        dias: taDias.value,
+        fc: taFC.value
+      };
+      if(taFoto.files[0]){
+        const reader = new FileReader();
+        reader.onload = function(e){
+          taData.foto = e.target.result;
+          localStorage.setItem('taData', JSON.stringify(taData));
+          alert('TA i foto guardats!');
+        };
+        reader.readAsDataURL(taFoto.files[0]);
+      } else {
+        localStorage.setItem('taData', JSON.stringify(taData));
+        alert('TA guardats!');
+      }
+      taPopup.style.display = 'none';
+    });
+
+    // PDF segons dia (arrel del repositori)
+    boxExercici.addEventListener('click', () => {
+      const dia = avui.getDay(); // 0 = Diumenge
+      let pdfName = 'pdf_extra.pdf';
+      if(dia===1 || dia===6) pdfName = 'pdf_propioceptiu.pdf'; // Dilluns o Dissabte
+      if(dia===4 || dia===0) pdfName = 'pdf_forca.pdf'; // Dijous o Diumenge
+      window.open(pdfName, '_blank');
+    });
+
+    // EmailJS
+    boxEmail.addEventListener('click', () => {
+      const codi = localStorage.getItem('userCode') || '0000';
+      const email = localStorage.getItem('userEmail');
+      if(!email){ alert('No hi ha email guardat.'); return; }
+
+      const templateParams = {
+        from_name: 'App Hàbits',
+        from_email: email,
+        codi: codi,
+        data: avui.toLocaleDateString('ca-ES'),
+        exercici: habitData['groc'] ? 'Fet ✅' : 'No fet ❌',
+        medicacio: habitData['verd'] ? 'Fet ✅' : 'No fet ❌',
+        fruites: habitData['blau'] ? 'Fet ✅' : 'No fet ❌',
+        passes: habitData['lila'] ? 'Fet ✅' : 'No fet ❌',
+        ta: JSON.stringify(taData)
+      };
+
+      emailjs.send('service_ftro4h7', 'template_0f6celw', templateParams)
+        .then(() => alert('Resum enviat!'), (err) => alert('Error enviant: '+err.text));
+    });
+
+    // Reset de l'app
+    boxReset.addEventListener('click', () => {
+      if(confirm('Segur que vols reiniciar l\'app?')) {
+        localStorage.clear();
+        location.reload();
+      }
+    });
+
+    // Primera vegada: demanar codi i email
+    if(!localStorage.getItem('userCode') || !localStorage.getItem('userEmail')){
+      const userCode = prompt('Introdueix el teu codi de 4 xifres:');
+      const userEmail = prompt('Introdueix el teu email:');
+      localStorage.setItem('userCode', userCode);
+      localStorage.setItem('userEmail', userEmail);
     }
-  });
-</script>
+  </script>
 </body>
 </html>
