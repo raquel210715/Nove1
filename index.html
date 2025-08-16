@@ -214,7 +214,7 @@ function tancarModal(){ document.getElementById('modal').style.display='none'; }
 
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-emailjs.init('YOUR_USER_ID'); // posa el teu userID aquí entre cometes
+emailjs.init('Ii-pS-x9zkGqnawB7'); // posa el teu userID aquí entre cometes
 
 function obrirTA(){ document.getElementById('modalTA').style.display='flex'; }
 function tancarModalTA(){ document.getElementById('modalTA').style.display='none'; }
@@ -255,7 +255,7 @@ function enviarResum(){
     codi: usuariaCodi,
     contingut: JSON.stringify(habitData)
   };
-  emailjs.send('YOUR_SERVICE_ID','YOUR_TEMPLATE_ID',templateParams)
+  emailjs.send('service_4arkufe','template_88plg5s',templateParams)
     .then(response=>alert('Resum enviat!'), error=>alert('Error enviant: '+error));
 }
 
