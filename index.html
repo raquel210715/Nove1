@@ -5,160 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>App Hàbits Saludables</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f5f5f5;
-      color: #333;
-      text-align: center;
-    }
-
-    header {
-      background: #4a90e2;
-      color: white;
-      padding: 1rem;
-      font-size: 1.3rem;
-      font-weight: bold;
-    }
-
-    .container {
-      padding: 1rem;
-    }
-
-    .date {
-      font-size: 1.2rem;
-      margin: 1rem 0;
-    }
-
-    .habits {
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-      margin-bottom: 1.5rem;
-      align-items: flex-start;
-    }
-
-    .habit {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 1rem;
-    }
-
-    .circle {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 2px solid #555;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-    }
-
-    .circle.filled {
-      background: currentColor;
-    }
-
-    .circle.yellow { color: gold; }
-    .circle.green { color: green; }
-    .circle.blue { color: dodgerblue; }
-    .circle.purple { color: purple; }
-
-    .boxes {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 2rem;
-    }
-
-    .box {
-      width: 130px;
-      height: 130px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-
-    .box:hover {
-      background: #f0f0f0;
-    }
-
-    .box-icon {
-      font-size: 1.8rem;
-      margin-bottom: 0.4rem;
-    }
-
-    footer {
-      margin-top: 2rem;
-      font-size: 0.8rem;
-      color: #777;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
+    h2 { margin-top: 10px; }
+    .habit { display: flex; align-items: center; justify-content: center; margin: 10px; }
+    .circle { width: 25px; height: 25px; border: 2px solid #333; border-radius: 50%; margin-right: 10px; cursor: pointer; }
+    .filled { background-color: #4caf50; }
+    .boxes { display: flex; justify-content: space-around; margin-top: 20px; }
+    .box { width: 70px; height: 70px; border: 2px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
-  <header>App Hàbits Saludables</header>
-  <div class="container">
+  <h2 id="today-date"></h2>
 
-    <div class="date" id="today-date"></div>
+  <div class="habit"><div class="circle" data-habit="aigua"></div> Beure 2L d'aigua</div>
+  <div class="habit"><div class="circle" data-habit="fruites"></div> Menjar 5 fruites o verdures</div>
+  <div class="habit"><div class="circle" data-habit="passeig"></div> Fer un passeig</div>
+  <div class="habit"><div class="circle" data-habit="dormir"></div> Dormir 8 hores</div>
 
-    <div class="habits">
-      <div class="habit">
-        <div class="circle yellow" data-habit="exercici"></div>
-        Exercici
-      </div>
-      <div class="habit">
-        <div class="circle green" data-habit="medicacio"></div>
-        Prendre medicació
-      </div>
-      <div class="habit">
-        <div class="circle blue" data-habit="fruites"></div>
-        Menjar 5 fruites o verdures
-      </div>
-      <div class="habit">
-        <div class="circle purple" data-habit="pases"></div>
-        Caminar 8000 passes
-      </div>
-    </div>
-
-    <div class="boxes">
-      <div class="box" id="box-ta">
-        <div class="box-icon">🩺</div>
-        TA
-      </div>
-      <div class="box" id="box-exercici">
-        <div class="box-icon">💪</div>
-        Exercici (PDF)
-      </div>
-      <div class="box" id="box-email">
-        <div class="box-icon">✉️</div>
-        Enviar
-      </div>
-      <div class="box" id="box-reset">
-        <div class="box-icon">🔄</div>
-        Reiniciar
-      </div>
-    </div>
-
+  <div class="boxes">
+    <div class="box" id="box-ta">TA</div>
+    <div class="box" id="box-exercici">🏋️‍♀️</div>
+    <div class="box" id="box-email">✉️</div>
+    <div class="box" id="box-reset">🔄</div>
   </div>
-  <footer>Fet amb ❤️ per cuidar-te</footer>
 
   <script>
-  // --- Mostrar data d'avui ---
+  // --- Inicialitzar EmailJS (posa la teva publicKey aquí) ---
+  (function(){
+    emailjs.init("TEU_PUBLIC_KEY"); 
+  })();
+
+  // --- Demanar dades usuària ---
+  const userEmail = prompt("Introdueix el teu email:");
+  const userCode = prompt("Introdueix el teu codi de la usuària:");
+
+  // --- Mostrar data ---
   const dateEl = document.getElementById("today-date");
   const today = new Date();
   const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
   dateEl.textContent = today.toLocaleDateString("ca-ES", options);
 
-  // --- Gestió hàbits ---
+  // --- Hàbits ---
   const circles = document.querySelectorAll(".circle");
   circles.forEach(circle => {
     circle.addEventListener("click", () => {
@@ -166,25 +54,56 @@
     });
   });
 
-  // --- Botons de caixes ---
+  // --- Variables per guardar dades ---
+  let taValor = "";
+  
+  // --- TA ---
   document.getElementById("box-ta").addEventListener("click", () => {
     const valor = prompt("Introdueix la teva pressió arterial (TA):");
-    if (valor) alert("Has desat la TA: " + valor);
+    if (valor) {
+      taValor = valor;
+      alert("Has desat la TA: " + valor);
+    }
   });
 
+  // --- Exercici ---
   document.getElementById("box-exercici").addEventListener("click", () => {
     alert("Aquí pots enllaçar el teu PDF d’exercicis 💪");
-    // window.open("rutina.pdf", "_blank");  <-- quan tinguis el pdf, activa això
   });
 
+  // --- Enviar ---
   document.getElementById("box-email").addEventListener("click", () => {
-    alert("Funció d’enviament pendent de configurar amb EmailJS ✉️");
-    // Aquí connectarem amb emailjs.send() quan tinguem el template actiu
+    const habitsStatus = {};
+    circles.forEach(c => {
+      habitsStatus[c.dataset.habit] = c.classList.contains("filled") ? "✔️" : "❌";
+    });
+
+    const templateParams = {
+      email: userEmail,
+      codi: userCode,
+      data: today.toLocaleDateString("ca-ES", options),
+      aigua: habitsStatus.aigua,
+      fruites: habitsStatus.fruites,
+      passeig: habitsStatus.passeig,
+      dormir: habitsStatus.dormir,
+      ta: taValor || "No registrada"
+    };
+
+    emailjs.send("TEU_SERVICE_ID","TEU_TEMPLATE_ID", templateParams)
+      .then(() => {
+        alert("Dades enviades correctament ✅");
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("Error en enviar ❌");
+      });
   });
 
+  // --- Reiniciar ---
   document.getElementById("box-reset").addEventListener("click", () => {
     if (confirm("Segur que vols reiniciar tots els hàbits i dades?")) {
       circles.forEach(c => c.classList.remove("filled"));
+      taValor = "";
       alert("App reiniciada 🔄");
     }
   });
