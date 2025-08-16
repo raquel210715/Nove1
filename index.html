@@ -1,62 +1,193 @@
-<!DOCTYPE html><html lang="ca">
+<!DOCTYPE html>
+<html lang="ca">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>App Hàbits - Dia</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Open+Sans&display=swap" rel="stylesheet">
-<style>
-  body { margin:0; font-family:'Open Sans',sans-serif; background:#fdfcfb; }
-  header { text-align:center; padding:1rem; font-family:'Playfair Display', serif; font-size:2rem; }
-  .day-view { max-width:400px; margin:0 auto; padding:1rem; display:flex; flex-direction:column; gap:1rem; }
-  .date-display { font-weight:bold; font-size:1.5rem; text-align:center; }
-  .habits { display:flex; flex-direction:column; gap:0.5rem; }
-  .habit { display:flex; align-items:center; gap:10px; cursor:pointer; }
-  .circle { width:20px; height:20px; border-radius:50%; border:2px solid; display:inline-block; }
-  .done { background-color:currentColor; }
-  .buttons { display:flex; justify-content:space-around; margin-top:1rem; gap:10px; }
-  .btn { flex:1; padding:0.8rem; text-align:center; border-radius:10px; background:#eee; cursor:pointer; user-select:none; }
-  .message-popup { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#ffffffdd; padding:10px 20px; border-radius:20px; box-shadow:0 2px 6px rgba(0,0,0,0.2); font-size:1rem; z-index:1000; animation:fadeOut 3s forwards; }
-  @keyframes fadeOut { 0%{opacity:1;} 80%{opacity:1;} 100%{opacity:0;} }
-  @media(max-width:500px){.circle{width:16px;height:16px;}.btn{padding:0.6rem;font-size:0.9rem;}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Hàbits Saludables</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      color: #333;
+      text-align: center;
+    }
+
+    header {
+      background: #4a90e2;
+      color: white;
+      padding: 1rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 1rem;
+    }
+
+    .date {
+      font-size: 1.2rem;
+      margin: 1rem 0;
+    }
+
+    .habits {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+      align-items: flex-start;
+    }
+
+    .habit {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1rem;
+    }
+
+    .circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #555;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .circle.filled {
+      background: currentColor;
+    }
+
+    .circle.yellow { color: gold; }
+    .circle.green { color: green; }
+    .circle.blue { color: dodgerblue; }
+    .circle.purple { color: purple; }
+
+    .boxes {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .box {
+      width: 130px;
+      height: 130px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .box:hover {
+      background: #f0f0f0;
+    }
+
+    .box-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.4rem;
+    }
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #777;
+    }
+  </style>
 </head>
 <body>
-<header>APP HÀBITS - DIA</header>
-<div class="day-view">
-  <div class="date-display" id="dateDisplay"></div>
-  <div class="habits" id="habitsContainer"></div>
-  <div class="buttons">
-    <div class="btn" id="btnTA">TA</div>
-    <div class="btn" id="btnExercici">Exercici</div>
+  <header>App Hàbits Saludables</header>
+  <div class="container">
+
+    <div class="date" id="today-date"></div>
+
+    <div class="habits">
+      <div class="habit">
+        <div class="circle yellow" data-habit="exercici"></div>
+        Exercici
+      </div>
+      <div class="habit">
+        <div class="circle green" data-habit="medicacio"></div>
+        Prendre medicació
+      </div>
+      <div class="habit">
+        <div class="circle blue" data-habit="fruites"></div>
+        Menjar 5 fruites o verdures
+      </div>
+      <div class="habit">
+        <div class="circle purple" data-habit="pases"></div>
+        Caminar 8000 passes
+      </div>
+    </div>
+
+    <div class="boxes">
+      <div class="box" id="box-ta">
+        <div class="box-icon">🩺</div>
+        TA
+      </div>
+      <div class="box" id="box-exercici">
+        <div class="box-icon">💪</div>
+        Exercici (PDF)
+      </div>
+      <div class="box" id="box-email">
+        <div class="box-icon">✉️</div>
+        Enviar
+      </div>
+      <div class="box" id="box-reset">
+        <div class="box-icon">🔄</div>
+        Reiniciar
+      </div>
+    </div>
+
   </div>
-  <div class="buttons">
-    <div class="btn" id="btnEnviar">Enviar</div>
-    <div class="btn" id="btnReinici">Reinici</div>
-  </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<script>
-emailjs.init("Ii-pS-x9zkGqnawB7"); // posa la teva Public Key aquíconst habits=[ {color:'#f5ea16', text:'Exercici'}, {color:'#119a48', text:'Prendre medicació'}, {color:'#3954a3', text:'Menjar 5 fruites o verdures'}, {color:'#c5278e', text:'Caminar 8000 passes'} ];
+  <footer>Fet amb ❤️ per cuidar-te</footer>
 
-let habitData=JSON.parse(localStorage.getItem('habitData')||'{}'); const todayKey=new Date().toISOString().split('T')[0];
+  <script>
+  // --- Mostrar data d'avui ---
+  const dateEl = document.getElementById("today-date");
+  const today = new Date();
+  const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+  dateEl.textContent = today.toLocaleDateString("ca-ES", options);
 
-function renderHabits(){ const container=document.getElementById('habitsContainer'); container.innerHTML=''; habits.forEach((h,i)=>{ const div=document.createElement('div'); div.className='habit'; const circle=document.createElement('span'); circle.className='circle'; circle.style.color=h.color; if(habitData[todayKey] && habitData[todayKey][i]) circle.classList.add('done'); circle.addEventListener('click',()=>{ toggleHabit(todayKey,i,circle); }); const text=document.createElement('span'); text.textContent=h.text; div.appendChild(circle); div.appendChild(text); container.appendChild(div); }); }
+  // --- Gestió hàbits ---
+  const circles = document.querySelectorAll(".circle");
+  circles.forEach(circle => {
+    circle.addEventListener("click", () => {
+      circle.classList.toggle("filled");
+    });
+  });
 
-function toggleHabit(key,index,circleEl){ habitData[key]=habitData[key]||Array(habits.length).fill(false); habitData[key][index]=!habitData[key][index]; circleEl.classList.toggle('done'); localStorage.setItem('habitData',JSON.stringify(habitData)); }
+  // --- Botons de caixes ---
+  document.getElementById("box-ta").addEventListener("click", () => {
+    const valor = prompt("Introdueix la teva pressió arterial (TA):");
+    if (valor) alert("Has desat la TA: " + valor);
+  });
 
-function showMessage(msg){ const popup=document.createElement('div'); popup.className='message-popup'; popup.textContent=msg; document.body.appendChild(popup); setTimeout(()=>popup.remove(),3000); }
+  document.getElementById("box-exercici").addEventListener("click", () => {
+    alert("Aquí pots enllaçar el teu PDF d’exercicis 💪");
+    // window.open("rutina.pdf", "_blank");  <-- quan tinguis el pdf, activa això
+  });
 
-function enviarResum(){ // comprovar si hi ha email guardat const email=localStorage.getItem('userEmail'); const codi=localStorage.getItem('userCode'); if(!email || !codi){ showMessage('No hi ha email o codi guardat!'); return; }
+  document.getElementById("box-email").addEventListener("click", () => {
+    alert("Funció d’enviament pendent de configurar amb EmailJS ✉️");
+    // Aquí connectarem amb emailjs.send() quan tinguem el template actiu
+  });
 
-const message='Hàbits del dia: '+(habitData[todayKey]||[]).map((v,i)=>habits[i].text+': '+(v?'✔':'✖')).join(', '); emailjs.send('service_b8osa26','template_0f6celw',{to_email:email,subject:codi,message:message}) .then(()=>showMessage('Enviat correctament')) .catch(e=>showMessage('Error enviant')); }
-
-function reiniciarApp(){ if(confirm('Segur que vols reiniciar l'app?')){ localStorage.clear(); location.reload(); } }
-
-document.getElementById('btnEnviar').addEventListener('click',enviarResum); document.getElementById('btnReinici').addEventListener('click',reiniciarApp);
-
-document.getElementById('btnTA').addEventListener('click',()=>{ showMessage('Aquí apareixeria el popup de TA amb opció foto/llapis'); }); document.getElementById('btnExercici').addEventListener('click',()=>{ showMessage('Aquí apareixeria el PDF corresponent segons el dia'); });
-
-// mostrar data document.getElementById('dateDisplay').textContent=new Date().toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); renderHabits(); </script>
-
+  document.getElementById("box-reset").addEventListener("click", () => {
+    if (confirm("Segur que vols reiniciar tots els hàbits i dades?")) {
+      circles.forEach(c => c.classList.remove("filled"));
+      alert("App reiniciada 🔄");
+    }
+  });
+</script>
 </body>
 </html>
