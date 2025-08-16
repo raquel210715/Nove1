@@ -1,271 +1,187 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendari d'Hàbits</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Open+Sans&display=swap" rel="stylesheet">
-<style>
-  body { margin:0; font-family:'Open Sans', sans-serif; background:#fdfcfb; color:#333; }
-  header { text-align:center; padding:1rem; }
-  header h1 { font-family:'Playfair Display', serif; font-size:2rem; margin:0; }
-  .calendar-wrapper { max-width:600px; margin:0 auto; padding:1rem; }
-  .month-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; }
-  .month-nav button { font-size:1.5rem; cursor:pointer; }
-  .month-title { font-weight:bold; font-size:1.2rem; text-align:center; }
-  .day-names, .calendar { display:grid; grid-template-columns:repeat(7,1fr); }
-  .day-names div { text-align:center; font-weight:bold; padding:0.5rem; }
-  .calendar .day { background:#fff; border:1px solid #eee; min-height:80px; padding:4px; position:relative; cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; }
-  .day-number { font-weight:bold; }
-  .circles { display:flex; gap:4px; margin-top:4px; }
-  .circle { width:14px; height:14px; border-radius:50%; border:2px solid; background:white; cursor:pointer; }
-  .circle.done { background-color: currentColor; }
-  /* Modal */
-  .modal { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; padding:1rem; z-index:999; }
-  .modal-content { background:#fff; padding:1rem; border-radius:10px; width:100%; max-width:400px; position:relative; }
-  .close-btn { position:absolute; top:10px; right:10px; background:#eee; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; }
-  .habit-label { display:flex; align-items:center; margin:0.5rem 0; font-size:0.95rem; justify-content:flex-start; }
-  .habit-label .circle { margin-right:10px; }
-  /* Page inicial */
-  #pagina-inicial { position:fixed; top:0; left:0; right:0; bottom:0; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000; }
-  #pagina-inicial input { padding:0.5rem; margin:0.5rem 0; width:200px; font-size:1rem; }
-  #pagina-inicial button { padding:0.5rem 1rem; font-size:1rem; cursor:pointer; }
-  @media(max-width:600px){ .calendar .day { min-height:60px; padding:2px; } .day-number { font-size:0.8rem; } .circle { width:12px; height:12px; } }
-</style>
+  <meta charset="UTF-8">
+  <title>App Hàbits</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      text-align: center;
+    }
+
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    .habit-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start; /* alineació a l'esquerra */
+      margin-left: 20px;
+    }
+
+    .habit-row {
+      margin-bottom: 15px;
+    }
+
+    .habit {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 5px;
+      cursor: pointer;
+      border: 2px solid currentColor;
+      background-color: white;
+      color: inherit;
+      font-weight: bold;
+    }
+
+    .habit.active {
+      background-color: currentColor;
+      color: white;
+    }
+
+    .habit-label {
+      margin-left: 10px;
+      font-size: 16px;
+    }
+
+    .send-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    .pdf-btn {
+      margin-top: 20px;
+      display: inline-block;
+      padding: 10px;
+      border: 1px solid #333;
+      cursor: pointer;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 </head>
 <body>
-
-<header>
-  <h1>CALENDARI D'HÀBITS</h1>
-</header>
-
-<div id="pagina-inicial">
-  <h2>Benvinguda!</h2>
-  <p>Introdueix el teu codi de 4 xifres i email:</p>
-  <input type="text" id="input-codi" maxlength="4" placeholder="Codi 4 xifres">
-  <input type="email" id="input-email" placeholder="Email">
-  <button onclick="guardarDadesInicials()">Guardar</button>
-</div>
-
-<div class="calendar-wrapper">
-  <div class="month-nav">
-    <button onclick="canviarMes(-1)">&lt;</button>
-    <div class="month-title" id="month-title"></div>
-    <button onclick="canviarMes(1)">&gt;</button>
+  <div class="day-header">
+    <button onclick="prevDay()">⬅</button>
+    <span id="dayLabel"></span>
+    <button onclick="nextDay()">➡</button>
   </div>
-  <div class="day-names">
-    <div>Dg</div><div>Dl</div><div>Dm</div><div>Dc</div><div>Dj</div><div>Dv</div><div>Ds</div>
-  </div>
-  <div class="calendar" id="calendar"></div>
-</div>
 
-<!-- Modal per dia -->
-<div class="modal" id="modal">
-  <div class="modal-content" id="modal-content">
-    <button class="close-btn" onclick="tancarModal()">X</button>
-    <h3 id="modal-date"></h3>
-    <div id="habits-container"></div>
-  </div>
-</div>
-
-<script>
-let currentDate = new Date();
-let habitData = JSON.parse(localStorage.getItem('habitData') || '{}');
-let usuariaEmail = localStorage.getItem('usuariaEmail');
-let usuariaCodi = localStorage.getItem('usuariaCodi');
-const habits = [
-  {color:'#f5ea16', nom:'Exercici'},        // groc
-  {color:'#119a48', nom:'Prendre medicació'}, // verd
-  {color:'#3954a3', nom:'Menjar 5 fruites o verdures'}, // blau
-  {color:'#c5278e', nom:'Caminar 8000 passes'}  // lila
-];
-
-// Mostrar pàgina inicial si no hi ha dades
-window.onload = () => {
-  if(usuariaEmail && usuariaCodi){
-    document.getElementById('pagina-inicial').style.display='none';
-    renderCalendar();
-  }
-}
-
-function guardarDadesInicials(){
-  const codi = document.getElementById('input-codi').value;
-  const email = document.getElementById('input-email').value;
-  if(codi.length===4 && email.includes('@')){
-    localStorage.setItem('usuariaEmail', email);
-    localStorage.setItem('usuariaCodi', codi);
-    usuariaEmail=email;
-    usuariaCodi=codi;
-    document.getElementById('pagina-inicial').style.display='none';
-    renderCalendar();
-  } else {
-    alert('Introdueix un codi vàlid i un email correcte');
-  }
-}
-
-function canviarMes(offset){
-  currentDate.setMonth(currentDate.getMonth()+offset);
-  renderCalendar();
-}
-
-function renderCalendar(){
-  const calendar = document.getElementById('calendar');
-  calendar.innerHTML='';
-  const monthTitle = document.getElementById('month-title');
-  monthTitle.textContent = currentDate.toLocaleString('ca-ES',{month:'long', year:'numeric'}).toUpperCase();
-
-  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(),1);
-  const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth()+1,0);
-  const startDay = firstDay.getDay(); // Domingo=0
-  const totalDays = lastDay.getDate();
-
-  // afegir dies buits inicials
-  for(let i=0;i<startDay;i++){calendar.innerHTML+='<div></div>';}
-
-  for(let d=1; d<=totalDays; d++){
-    const dayDiv = document.createElement('div');
-    dayDiv.className='day';
-    const dayNumber = document.createElement('div');
-    dayNumber.className='day-number';
-    dayNumber.textContent=d;
-    dayDiv.appendChild(dayNumber);
-
-    const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${d}`;
-    habitData[key] = habitData[key] || Array(habits.length).fill(false);
-
-    const circles = document.createElement('div');
-    circles.className='circles';
-    habits.forEach((h,i)=>{
-      const c = document.createElement('div');
-      c.className='circle';
-      c.style.borderColor=h.color;
-      if(habitData[key][i]) c.classList.add('done'); // si està marcat
-      c.onclick= (e)=>{ e.stopPropagation(); toggleHabit(key,i,c); };
-      circles.appendChild(c);
-    });
-    dayDiv.appendChild(circles);
-    dayDiv.onclick=()=>{ obrirModal(key,d); };
-    calendar.appendChild(dayDiv);
-  }
-}
-
-function toggleHabit(key,index,elem){
-  habitData[key][index]=!habitData[key][index];
-  localStorage.setItem('habitData',JSON.stringify(habitData));
-  if(habitData[key][index]) elem.classList.add('done'); else elem.classList.remove('done');
-}
-
-// Modal
-function obrirModal(key,day){
-  document.getElementById('modal').style.display='flex';
-  document.getElementById('modal-date').textContent = `Dia ${day}`;
-  const container = document.getElementById('habits-container');
-  container.innerHTML='';
-  habits.forEach((h,i)=>{
-    const label = document.createElement('div');
-    label.className='habit-label';
-    const c = document.createElement('div');
-    c.className='circle';
-    c.style.borderColor=h.color;
-    if(habitData[key][i]) c.classList.add('done');
-    c.onclick = (e)=>{ e.stopPropagation(); toggleHabit(key,i,c); };
-    label.appendChild(c);
-    label.appendChild(document.createTextNode(h.nom));
-    container.appendChild(label);
-  });
-}
-function tancarModal(){ document.getElementById('modal').style.display='none'; }
-</script>
-<!-- Botons TA i Exercici + Enviar + Reiniciar -->
-<div class="calendar-wrapper" style="max-width:400px; margin:10px auto;">
-  <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
-    <button onclick="obrirTA()">TA</button>
-    <button onclick="obrirExercici()">Exercici</button>
-  </div>
-  <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
-    <button onclick="enviarResum()">✉️ Enviar resum</button>
-    <button onclick="reiniciarApp()">🔄 Reiniciar app</button>
-  </div>
-</div>
-
-<!-- Modal TA -->
-<div class="modal" id="modalTA">
-  <div class="modal-content">
-    <button class="close-btn" onclick="tancarModalTA()">X</button>
-    <h3>Registre TA</h3>
-    <div style="display:flex; flex-direction:column; gap:5px;">
-      <input type="number" placeholder="Valor 1 (3 xifres)" maxlength="3">
-      <input type="number" placeholder="Valor 2 (3 xifres)" maxlength="3">
-      <input type="number" placeholder="Valor 3 (3 xifres)" maxlength="3">
+  <div class="habit-container">
+    <div class="habit-row">
+      <button class="habit" data-color="gold" data-habit="exercici">E</button>
+      <span class="habit-label">Exercici</span>
     </div>
-    <button onclick="guardarTA()">💾 Guardar</button>
-    <button onclick="ferFoto()">📸 Fer foto</button>
+    <div class="habit-row">
+      <button class="habit" data-color="green" data-habit="medicacio">M</button>
+      <span class="habit-label">Prendre medicació</span>
+    </div>
+    <div class="habit-row">
+      <button class="habit" data-color="blue" data-habit="fruites">F</button>
+      <span class="habit-label">Menjar 5 fruites o verdures</span>
+    </div>
+    <div class="habit-row">
+      <button class="habit" data-color="purple" data-habit="passes">P</button>
+      <span class="habit-label">Caminar 8000 passes</span>
+    </div>
   </div>
-</div>
 
-<!-- Modal Exercici -->
-<div class="modal" id="modalExercici">
-  <div class="modal-content">
-    <button class="close-btn" onclick="tancarModalExercici()">X</button>
-    <h3>Exercici</h3>
-    <iframe id="pdf-frame" src="" width="100%" height="400px"></iframe>
-  </div>
-</div>
+  <div class="pdf-btn" onclick="openPDF()">📄 Veure PDF</div>
 
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<script>
-emailjs.init('Ii-pS-x9zkGqnawB7'); // posa el teu userID aquí entre cometes
+  <button class="send-btn" onclick="sendEmail()">✉ Enviar</button>
 
-function obrirTA(){ document.getElementById('modalTA').style.display='flex'; }
-function tancarModalTA(){ document.getElementById('modalTA').style.display='none'; }
+  <script>
+    // --- Inicialitzar EmailJS ---
+    (function() {
+      emailjs.init("Ii-pS-x9zkGqnawB7"); // 👉 posa aquí la teva Public Key
+    })();
 
-function obrirExercici(){
-  const dia = new Date().getDay(); // 0=dg
-  let pdfFile='pdf-extra.pdf';
-  if(dia===1||dia===6) pdfFile='pdf-propioceptiu.pdf';
-  if(dia===4||dia===0) pdfFile='pdf-forca.pdf';
-  document.getElementById('pdf-frame').src=pdfFile;
-  document.getElementById('modalExercici').style.display='flex';
-}
-function tancarModalExercici(){ document.getElementById('modalExercici').style.display='none'; }
+    let currentDate = new Date();
+    let habitsData = {}; // Guardem els hàbits per dia
 
-// Guardar TA
-function guardarTA(){
-  alert('TA guardada (simulació)');
-  tancarModalTA();
-}
+    function updateDayLabel() {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById("dayLabel").innerText = currentDate.toLocaleDateString("ca-ES", options);
+      loadHabits();
+    }
 
-// Fer foto
-function ferFoto(){
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    alert('No es pot accedir a la càmera');
-    return;
-  }
-  navigator.mediaDevices.getUserMedia({video:true})
-    .then(stream=>{
-      alert('Foto feta (simulació)');
-      stream.getTracks().forEach(track=>track.stop());
-    }).catch(err=>alert('Error càmera: '+err));
-}
+    function prevDay() {
+      currentDate.setDate(currentDate.getDate() - 1);
+      updateDayLabel();
+    }
 
-// Enviar resum EmailJS
-function enviarResum(){
-  const templateParams={
-    usuaria_email: usuariaEmail,
-    codi: usuariaCodi,
-    contingut: JSON.stringify(habitData)
-  };
-  emailjs.send('service_4arkufe','template_88plg5s',templateParams)
-    .then(response=>alert('Resum enviat!'), error=>alert('Error enviant: '+error));
-}
+    function nextDay() {
+      currentDate.setDate(currentDate.getDate() + 1);
+      updateDayLabel();
+    }
 
-// Reiniciar app
-function reiniciarApp(){
-  if(confirm('Segur que vols reiniciar l\'app?')) {
-    localStorage.clear();
-    location.reload();
-  }
-}
-</script>
+    function loadHabits() {
+      const dateKey = currentDate.toDateString();
+      document.querySelectorAll(".habit").forEach(btn => {
+        btn.style.color = btn.dataset.color;
+        btn.classList.remove("active");
+        if (habitsData[dateKey] && habitsData[dateKey].includes(btn.dataset.habit)) {
+          btn.classList.add("active");
+        }
+      });
+    }
+
+    document.querySelectorAll(".habit").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const dateKey = currentDate.toDateString();
+        if (!habitsData[dateKey]) habitsData[dateKey] = [];
+
+        if (btn.classList.contains("active")) {
+          btn.classList.remove("active");
+          habitsData[dateKey] = habitsData[dateKey].filter(h => h !== btn.dataset.habit);
+        } else {
+          btn.classList.add("active");
+          habitsData[dateKey].push(btn.dataset.habit);
+        }
+      });
+    });
+
+    // Obrir PDF segons el dia
+    function openPDF() {
+      const day = currentDate.getDay(); // 0 = diumenge ... 6 = dissabte
+      let pdfFile = "pdf-extra.pdf";
+
+      if (day === 1 || day === 6) pdfFile = "pdf-propioceptiu.pdf"; // dilluns o dissabte
+      if (day === 4 || day === 0) pdfFile = "pdf-forca.pdf"; // dijous o diumenge
+
+      window.open(pdfFile, "_blank");
+    }
+
+    // Enviar amb EmailJS
+    function sendEmail() {
+      const dateKey = currentDate.toDateString();
+      const selectedHabits = habitsData[dateKey] ? habitsData[dateKey].join(", ") : "Cap";
+
+      emailjs.send("service_4arkufe", "template_88plg5s", {
+        user_email: "saluticures@gmail.com", // 👉 canvia-ho per l’email de destí
+        dia: dateKey,
+        habits: selectedHabits
+      }).then(response => {
+        alert("Email enviat correctament!");
+        console.log("SUCCESS", response);
+      }).catch(error => {
+        alert("Error enviant: " + JSON.stringify(error));
+        console.error("EMAILJS ERROR:", error);
+      });
+    }
+
+    // Inicialitzar la vista
+    updateDayLabel();
+  </script>
 </body>
 </html>
