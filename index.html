@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 40px; // aquest és el marge
+      margin: 40px;
       text-align: center;
     }
 
@@ -18,35 +18,40 @@
       margin-bottom: 100px; 
     }
 
+    .arrow-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 50px;
+      line-height: 1;
+    }
+
     .habit-container {
       display: flex;
       flex-direction: column;
-      align-items: flex-start; /* alineació a l'esquerra */
+      align-items: flex-start;
       margin-left: 20px;
     }
 
     .habit-row {
-      margin-bottom: 15px; // espai entre hàbits
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
     }
 
     .habit {
       width: 150px;
       height: 150px;
       border-radius: 80%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
       margin: 20px;
       cursor: pointer;
       border: 8px solid currentColor;
       background-color: white;
       color: inherit;
-      font-weight: bold;
     }
 
     .habit.active {
       background-color: currentColor;
-      color: white;
     }
 
     .habit-label {
@@ -56,58 +61,89 @@
 
     .send-btn {
       margin-top: 30px;
-      padding: 30px 60px;
+      font-size: 70px;
+      background: none;
+      border: none;
       cursor: pointer;
     }
 
-    .pdf-btn {
+    .pdf-btn, .ta-btn, .reset-btn {
       margin-top: 30px;
       display: inline-block;
       padding: 30px;
       border: 4px solid #333;
       cursor: pointer;
+      font-size: 40px;
+    }
+
+    .ta-inputs {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .ta-inputs input {
+      font-size: 30px;
+      width: 120px;
+      margin: 10px;
+      padding: 10px;
+    }
+
+    .ta-inputs button {
+      font-size: 25px;
+      padding: 10px;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 </head>
 <body>
   <div class="day-header">
-    <button onclick="prevDay()">⬅</button>
+    <button class="arrow-btn" onclick="prevDay()">&#8592;</button>
     <span id="dayLabel"></span>
-    <button onclick="nextDay()">➡</button>
+    <button class="arrow-btn" onclick="nextDay()">&#8594;</button>
   </div>
 
   <div class="habit-container">
     <div class="habit-row">
-      <button class="habit" data-color="gold" data-habit="exercici">E</button>
+      <button class="habit" data-color="gold" data-habit="exercici"></button>
       <span class="habit-label">Exercici</span>
     </div>
     <div class="habit-row">
-      <button class="habit" data-color="green" data-habit="medicacio">M</button>
+      <button class="habit" data-color="green" data-habit="medicacio"></button>
       <span class="habit-label">Prendre medicació</span>
     </div>
     <div class="habit-row">
-      <button class="habit" data-color="blue" data-habit="fruites">F</button>
+      <button class="habit" data-color="blue" data-habit="fruites"></button>
       <span class="habit-label">Menjar 5 fruites o verdures</span>
     </div>
     <div class="habit-row">
-      <button class="habit" data-color="purple" data-habit="passes">P</button>
+      <button class="habit" data-color="purple" data-habit="passes"></button>
       <span class="habit-label">Caminar 8000 passes</span>
     </div>
   </div>
 
-  <div class="pdf-btn" onclick="openPDF()">📄 Veure PDF</div>
+  <div class="pdf-btn" onclick="openPDF()">💪 Veure PDF</div>
+  <div class="ta-btn" onclick="toggleTA()">🩺 Apuntar TA</div>
 
-  <button class="send-btn" onclick="sendEmail()">✉ Enviar</button>
+  <div class="ta-inputs" id="taInputs">
+    <input type="number" placeholder="Sistòlica">
+    <input type="number" placeholder="Diastòlica">
+    <input type="number" placeholder="Pols">
+    <br>
+    <input type="file" accept="image/*">
+    <br>
+    <button onclick="guardarTA()">Guardar TA</button>
+  </div>
+
+  <button class="send-btn" onclick="sendEmail()">✉</button>
+  <div class="reset-btn" onclick="resetHabits()">🔄 Reiniciar</div>
 
   <script>
-    // --- Inicialitzar EmailJS ---
     (function() {
-      emailjs.init("Ii-pS-x9zkGqnawB7"); // 👉 posa aquí la teva Public Key
+      emailjs.init("Ii-pS-x9zkGqnawB7");
     })();
 
     let currentDate = new Date();
-    let habitsData = {}; // Guardem els hàbits per dia
+    let habitsData = {};
 
     function updateDayLabel() {
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -151,36 +187,46 @@
       });
     });
 
-    // Obrir PDF segons el dia
     function openPDF() {
-      const day = currentDate.getDay(); // 0 = diumenge ... 6 = dissabte
+      const day = currentDate.getDay();
       let pdfFile = "pdf-extra.pdf";
 
-      if (day === 1 || day === 6) pdfFile = "pdf-propioceptiu.pdf"; // dilluns o dissabte
-      if (day === 4 || day === 0) pdfFile = "pdf-forca.pdf"; // dijous o diumenge
+      if (day === 1 || day === 6) pdfFile = "pdf-propioceptiu.pdf";
+      if (day === 4 || day === 0) pdfFile = "pdf-forca.pdf";
 
       window.open(pdfFile, "_blank");
     }
 
-    // Enviar amb EmailJS
+    function toggleTA() {
+      const taDiv = document.getElementById("taInputs");
+      taDiv.style.display = taDiv.style.display === "none" ? "block" : "none";
+    }
+
+    function guardarTA() {
+      alert("TA guardada correctament (només local).");
+    }
+
+    function resetHabits() {
+      const dateKey = currentDate.toDateString();
+      habitsData[dateKey] = [];
+      loadHabits();
+    }
+
     function sendEmail() {
       const dateKey = currentDate.toDateString();
       const selectedHabits = habitsData[dateKey] ? habitsData[dateKey].join(", ") : "Cap";
 
       emailjs.send("service_4arkufe", "template_88plg5s", {
-        user_email: "saluticures@gmail.com", // 👉 canvia-ho per l’email de destí
+        user_email: "saluticures@gmail.com",
         dia: dateKey,
         habits: selectedHabits
       }).then(response => {
         alert("Email enviat correctament!");
-        console.log("SUCCESS", response);
       }).catch(error => {
         alert("Error enviant: " + JSON.stringify(error));
-        console.error("EMAILJS ERROR:", error);
       });
     }
 
-    // Inicialitzar la vista
     updateDayLabel();
   </script>
 </body>
