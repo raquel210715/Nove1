@@ -7,9 +7,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Open+Sans&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Open Sans', sans-serif; margin:0; padding:0; text-align:center; }
-    h2 { margin-top: 15px; }
-    .habit { display:flex; align-items:center; justify-content:center; margin:10px; }
-    .circle { width:25px; height:25px; border-radius:50%; margin-right:10px; cursor:pointer; border:2px solid #333; }
+    .date-nav { display:flex; justify-content:center; align-items:center; gap:10px; margin:10px 0; }
+    .date-nav button { font-size:1.2rem; }
+    #display-date { font-weight:bold; }
+    .habit { display:flex; align-items:center; justify-content:flex-start; margin:10px; }
+    .circle { width:25px; height:25px; border-radius:50%; margin-right:10px; cursor:pointer; border:2px solid #333; opacity:0.3; }
     .filled { opacity:1; }
     .boxes { display:flex; justify-content:space-around; margin-top:20px; }
     .box { width:70px; height:70px; border:2px solid #333; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-direction:column; }
@@ -20,7 +22,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
-  <h2 id="today-date"></h2>
+
+  <div class="date-nav">
+    <button id="prev-day">⬅️</button>
+    <span id="display-date"></span>
+    <button id="next-day">➡️</button>
+  </div>
 
   <div class="habit">
     <div class="circle" data-color="groc" style="background-color:#f5ea16;"></div> Exercici
@@ -42,7 +49,6 @@
     <div class="box" id="box-reset">🔄</div>
   </div>
 
-  <!-- TA popup -->
   <div id="ta-popup">
     <h3>Registra TA</h3>
     <input type="number" id="ta-sist" placeholder="Sistòlica">
@@ -57,8 +63,12 @@
     // Inicialització EmailJS
     emailjs.init("Ii-pS-x9zkGqnawB7"); // <-- Posa aquí la teva public key entre cometes
 
+    let currentDate = new Date();
+    const displayDate = document.getElementById('display-date');
+    const prevBtn = document.getElementById('prev-day');
+    const nextBtn = document.getElementById('next-day');
     const circles = document.querySelectorAll('.circle');
-    const todayDate = document.getElementById('today-date');
+
     const boxTA = document.getElementById('box-ta');
     const boxExercici = document.getElementById('box-exercici');
     const boxEmail = document.getElementById('box-email');
@@ -72,37 +82,38 @@
     const taFC = document.getElementById('ta-fc');
     const taFoto = document.getElementById('ta-foto');
 
-    const avui = new Date();
-    todayDate.textContent = avui.toLocaleDateString('ca-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
     let habitData = JSON.parse(localStorage.getItem('habitData') || '{}');
     let taData = JSON.parse(localStorage.getItem('taData') || '{}');
 
-    // Marcar hàbit
+    function updateDateDisplay(){
+      displayDate.textContent = currentDate.toLocaleDateString('ca-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    }
+
+    prevBtn.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() -1); updateDateDisplay(); });
+    nextBtn.addEventListener('click', () => { currentDate.setDate(currentDate.getDate() +1); updateDateDisplay(); });
+    updateDateDisplay();
+
+    // Hàbits toggle
     circles.forEach(circle => {
       const color = circle.getAttribute('data-color');
-      circle.addEventListener('click', () => {
+      if(habitData[color]) circle.classList.add('filled');
+      circle.addEventListener('click', ()=>{
         habitData[color] = !habitData[color];
         circle.classList.toggle('filled', habitData[color]);
         localStorage.setItem('habitData', JSON.stringify(habitData));
       });
-      if(habitData[color]) circle.classList.add('filled');
     });
 
     // Popup TA
-    boxTA.addEventListener('click', () => {
+    boxTA.addEventListener('click', ()=>{
       taPopup.style.display = 'block';
       if(taData.sist) taSist.value = taData.sist;
       if(taData.dias) taDias.value = taData.dias;
       if(taData.fc) taFC.value = taData.fc;
     });
-    taClose.addEventListener('click', () => taPopup.style.display = 'none');
-    taSave.addEventListener('click', () => {
-      taData = {
-        sist: taSist.value,
-        dias: taDias.value,
-        fc: taFC.value
-      };
+    taClose.addEventListener('click', ()=>taPopup.style.display='none');
+    taSave.addEventListener('click', ()=>{
+      taData = { sist:taSist.value, dias:taDias.value, fc:taFC.value };
       if(taFoto.files[0]){
         const reader = new FileReader();
         reader.onload = function(e){
@@ -115,12 +126,12 @@
         localStorage.setItem('taData', JSON.stringify(taData));
         alert('TA guardats!');
       }
-      taPopup.style.display = 'none';
+      taPopup.style.display='none';
     });
 
-    // PDF segons dia (arrel del repositori)
-    boxExercici.addEventListener('click', () => {
-      const dia = avui.getDay(); // 0 = Diumenge
+    // PDF segons dia
+    boxExercici.addEventListener('click', ()=>{
+      const dia = currentDate.getDay(); // 0 = Diumenge
       let pdfName = 'pdf_extra.pdf';
       if(dia===1 || dia===6) pdfName = 'pdf_propioceptiu.pdf'; // Dilluns o Dissabte
       if(dia===4 || dia===0) pdfName = 'pdf_forca.pdf'; // Dijous o Diumenge
@@ -128,7 +139,7 @@
     });
 
     // EmailJS
-    boxEmail.addEventListener('click', () => {
+    boxEmail.addEventListener('click', ()=>{
       const codi = localStorage.getItem('userCode') || '0000';
       const email = localStorage.getItem('userEmail');
       if(!email){ alert('No hi ha email guardat.'); return; }
@@ -137,7 +148,7 @@
         from_name: 'App Hàbits',
         from_email: email,
         codi: codi,
-        data: avui.toLocaleDateString('ca-ES'),
+        data: currentDate.toLocaleDateString('ca-ES'),
         exercici: habitData['groc'] ? 'Fet ✅' : 'No fet ❌',
         medicacio: habitData['verd'] ? 'Fet ✅' : 'No fet ❌',
         fruites: habitData['blau'] ? 'Fet ✅' : 'No fet ❌',
@@ -145,16 +156,13 @@
         ta: JSON.stringify(taData)
       };
 
-      emailjs.send('service_ftro4h7', 'template_0f6celw', templateParams)
-        .then(() => alert('Resum enviat!'), (err) => alert('Error enviant: '+err.text));
+      emailjs.send('service_4arkufe', 'template_88plg5s', templateParams)
+        .then(()=>alert('Resum enviat!'), (err)=>alert('Error enviant: '+err.text));
     });
 
-    // Reset de l'app
-    boxReset.addEventListener('click', () => {
-      if(confirm('Segur que vols reiniciar l\'app?')) {
-        localStorage.clear();
-        location.reload();
-      }
+    // Reset
+    boxReset.addEventListener('click', ()=>{
+      if(confirm('Segur que vols reiniciar l\'app?')){ localStorage.clear(); location.reload(); }
     });
 
     // Primera vegada: demanar codi i email
