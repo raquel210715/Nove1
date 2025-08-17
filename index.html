@@ -1,151 +1,271 @@
-<!DOCTYPE html><html lang="ca">
+<!DOCTYPE html>
+<html lang="ca">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Hàbits Saludables</title>
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <script>
-    (function(){
-      emailjs.init("TEU_PUBLIC_KEY");
-    })();
-  </script>
+  <title>App Hàbits</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .habit-circle {
-      width: 30px; height: 30px; border: 2px solid black; border-radius: 50%;
-      display: inline-flex; justify-content: center; align-items: center;
-      margin: 5px; background: white; cursor: pointer;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background: #fdfcfb;
     }
-    .habit-circle.active { background: black; }
-    .arrow { font-size: 30px; cursor: pointer; margin: 0 10px; }
-    .pdf-box { border: 1px solid #ccc; padding: 10px; border-radius: 10px;
-      display: flex; align-items: center; margin: 10px 0; }
-    .pdf-box i { font-size: 24px; margin-right: 10px; }
-    .popup {
-      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      background: white; padding: 20px; border: 2px solid black; border-radius: 10px;
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 40px;
+      padding: 20px;
     }
-    .popup.active { display: block; }
-    .overlay { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
-    .overlay.active { display:block; }
-    .btn { cursor:pointer; padding:8px 12px; border:none; border-radius:5px; }
-    .btn-reset { background:#f55; color:white; margin-top:20px; }
-    .btn-close { background:#aaa; color:white; margin-top:10px; }
-    .send-btn { font-size: 40px; cursor:pointer; }
+    .triangle {
+      width: 0;
+      height: 0;
+      border-top: 15px solid transparent;
+      border-bottom: 15px solid transparent;
+      cursor: pointer;
+    }
+    .triangle-left {
+      border-right: 20px solid #333;
+    }
+    .triangle-right {
+      border-left: 20px solid #333;
+    }
+    .habit-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-left: 20px;
+      margin-top: 20px;
+    }
+    .habit-row {
+      margin-bottom: 15px;
+    }
+    .habit {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 20px;
+      cursor: pointer;
+      border: 8px solid currentColor;
+      background-color: white;
+    }
+    .habit.active {
+      background-color: currentColor;
+    }
+    .habit-label {
+      margin-left: 10px;
+      font-size: 50px;
+      vertical-align: middle;
+    }
+    .pdf-btn, .ta-btn, .send-btn, .reset-btn {
+      margin: 20px;
+      padding: 30px;
+      font-size: 24px;
+      cursor: pointer;
+      border-radius: 10px;
+      border: 3px solid #333;
+      display: inline-block;
+    }
+    .pdf-btn { border-color: #119a48; }
+    .ta-btn { border-color: #f5ea16; }
+    .send-btn { border-color: #3954a3; }
+    .reset-btn { border-color: #ec1f24; }
+    /* Popup TA i reinici */
+    .popup-overlay {
+      position: fixed;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .popup-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+    }
+    .popup-content input {
+      width: 60px;
+      margin: 5px;
+      font-size: 20px;
+      text-align: center;
+    }
+    .popup-buttons {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-around;
+    }
+    .popup-buttons button {
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 10px;
+      border: none;
+    }
+    .btn-accept { background: #ec1f24; color: white; }
+    .btn-cancel { background: #ccc; color: #333; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 </head>
 <body>
-  <div id="login-screen">
-    <h2>Introdueix el teu codi i email</h2>
-    <input type="text" id="userCode" placeholder="Codi"><br><br>
-    <input type="email" id="userEmail" placeholder="Email"><br><br>
-    <button onclick="enterApp()">Entrar</button>
-  </div>  <div id="app-screen" style="display:none;">
-    <h2 id="current-date"></h2>
-    <div>
-      <span class="arrow" onclick="prevDay()">&#8592;</span>
-      <span class="arrow" onclick="nextDay()">&#8594;</span>
-    </div><h3>Hàbits</h3>
-<div id="habits"></div>
 
-<h3>Exercicis</h3>
-<div class="pdf-box">
-  <i>💪</i> <a href="pdf/pdf-propioceptiu.pdf" target="_blank">Propiocetiu</a>
-</div>
-<div class="pdf-box">
-  <i>💪</i> <a href="pdf/pdf-forca.pdf" target="_blank">Força</a>
-</div>
-<div class="pdf-box">
-  <i>💪</i> <a href="pdf/pdf-extra.pdf" target="_blank">Extra</a>
-</div>
+  <div class="day-header">
+    <div class="triangle triangle-left" onclick="prevDay()"></div>
+    <span id="dayLabel"></span>
+    <div class="triangle triangle-right" onclick="nextDay()"></div>
+  </div>
 
-<h3>Salut</h3>
-<div class="pdf-box" onclick="openTAPopup()">
-  <i>🩺</i> Mesura la TA
-</div>
+  <div class="habit-container">
+    <div class="habit-row">
+      <button class="habit" data-color="gold" data-habit="exercici"></button>
+      <span class="habit-label">Exercici</span>
+    </div>
+    <div class="habit-row">
+      <button class="habit" data-color="green" data-habit="medicacio"></button>
+      <span class="habit-label">Prendre medicació</span>
+    </div>
+    <div class="habit-row">
+      <button class="habit" data-color="blue" data-habit="fruites"></button>
+      <span class="habit-label">Menjar 5 fruites o verdures</span>
+    </div>
+    <div class="habit-row">
+      <button class="habit" data-color="purple" data-habit="passes"></button>
+      <span class="habit-label">Caminar 8000 passes</span>
+    </div>
+  </div>
 
-<br>
-<span class="send-btn" onclick="sendEmail()">✉️</span>
-<br>
-<button class="btn btn-reset" onclick="resetApp()">Reiniciar</button>
+  <div>
+    <div class="pdf-btn" onclick="openPDF()">💪 PDF Exercici</div>
+    <div class="ta-btn" onclick="openTAPopup()">🩺 TA</div>
+    <div class="send-btn" onclick="sendEmail()">✉ Enviar</div>
+    <div class="reset-btn" onclick="openResetPopup()">🔄 Reiniciar</div>
+  </div>
 
-  </div>  <!-- Popup TA -->  <div id="overlay" class="overlay"></div>
-  <div id="ta-popup" class="popup">
-    <h3>Introdueix la teva TA</h3>
-    <input type="number" id="ta-sis" placeholder="Sistòlica"><br><br>
-    <input type="number" id="ta-dia" placeholder="Diastòlica"><br><br>
-    <input type="number" id="ta-puls" placeholder="Puls"><br><br>
-    <label>Foto: <input type="file" id="ta-photo"></label><br><br>
-    <button class="btn-close" onclick="closeTAPopup()">Tancar</button>
-  </div>  <script>
-    let currentDate = new Date();
-    let habitsData = {};
+  <!-- Popup TA -->
+  <div id="taPopup" class="popup-overlay">
+    <div class="popup-content">
+      <h3>Registra la TA</h3>
+      <input type="number" id="ta1" placeholder="XXX">
+      <input type="number" id="ta2" placeholder="XXX">
+      <input type="number" id="ta3" placeholder="XXX">
+      <div class="popup-buttons">
+        <button class="btn-accept" onclick="saveTA()">Guardar</button>
+        <button class="btn-cancel" onclick="closeTAPopup()">Cancel·lar</button>
+      </div>
+    </div>
+  </div>
 
-    function renderDate(){
-      document.getElementById("current-date").innerText = currentDate.toDateString();
-      renderHabits();
-    }
+  <!-- Popup Reinici -->
+  <div id="resetPopup" class="popup-overlay">
+    <div class="popup-content">
+      <h3>Segur que vols reiniciar i perdre totes les dades?</h3>
+      <div class="popup-buttons">
+        <button class="btn-accept" onclick="confirmReset()">Acceptar</button>
+        <button class="btn-cancel" onclick="closeResetPopup()">Cancel·lar</button>
+      </div>
+    </div>
+  </div>
 
-    function prevDay(){ currentDate.setDate(currentDate.getDate()-1); renderDate(); }
-    function nextDay(){ currentDate.setDate(currentDate.getDate()+1); renderDate(); }
+<script>
+  // --- EmailJS ---
+  (function() { emailjs.init("Ii-pS-x9zkGqnawB7"); })();
 
-    function renderHabits(){
-      const container = document.getElementById("habits");
-      container.innerHTML = "";
-      if(!habitsData[currentDate]) habitsData[currentDate] = [false,false,false,false,false];
-      habitsData[currentDate].forEach((active,i)=>{
-        const circle=document.createElement("div");
-        circle.className="habit-circle"+(active?" active":"");
-        circle.onclick=()=>{
-          habitsData[currentDate][i]=!habitsData[currentDate][i];
-          renderHabits();
-        };
-        container.appendChild(circle);
-      });
-    }
+  let currentDate = new Date();
+  let habitsData = {};
+  let taData = {};
 
-    function enterApp(){
-      document.getElementById("login-screen").style.display="none";
-      document.getElementById("app-screen").style.display="block";
-      renderDate();
-    }
+  function updateDayLabel() {
+    const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+    document.getElementById("dayLabel").innerText = currentDate.toLocaleDateString("ca-ES", options);
+    loadHabits();
+  }
 
-    function resetApp(){
-      document.getElementById("login-screen").style.display="block";
-      document.getElementById("app-screen").style.display="none";
-    }
+  function prevDay(){ currentDate.setDate(currentDate.getDate()-1); updateDayLabel(); }
+  function nextDay(){ currentDate.setDate(currentDate.getDate()+1); updateDayLabel(); }
 
-    function openTAPopup(){
-      document.getElementById("overlay").classList.add("active");
-      document.getElementById("ta-popup").classList.add("active");
-    }
+  function loadHabits(){
+    const dateKey = currentDate.toDateString();
+    document.querySelectorAll(".habit").forEach(btn=>{
+      btn.style.color = btn.dataset.color;
+      btn.classList.remove("active");
+      if(habitsData[dateKey] && habitsData[dateKey].includes(btn.dataset.habit)){
+        btn.classList.add("active");
+      }
+    });
+  }
 
-    function closeTAPopup(){
-      document.getElementById("overlay").classList.remove("active");
-      document.getElementById("ta-popup").classList.remove("active");
-    }
+  document.querySelectorAll(".habit").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const dateKey = currentDate.toDateString();
+      if(!habitsData[dateKey]) habitsData[dateKey]=[];
+      if(btn.classList.contains("active")){
+        btn.classList.remove("active");
+        habitsData[dateKey] = habitsData[dateKey].filter(h=>h!==btn.dataset.habit);
+      }else{
+        btn.classList.add("active");
+        habitsData[dateKey].push(btn.dataset.habit);
+      }
+    });
+  });
 
-    function sendEmail(){
-      const email = document.getElementById("userEmail").value;
-      const code = document.getElementById("userCode").value;
-      const taSis = document.getElementById("ta-sis").value;
-      const taDia = document.getElementById("ta-dia").value;
-      const taPuls = document.getElementById("ta-puls").value;
-      const photo = document.getElementById("ta-photo").files[0]?.name || "No adjuntada";
-      
-      emailjs.send("TEU_SERVICE_ID","TEU_TEMPLATE_ID",{
-        email: email,
-        code: code,
-        habits: habitsData[currentDate],
-        ta_sistolica: taSis,
-        ta_diastolica: taDia,
-        ta_puls: taPuls,
-        photo: photo
-      }).then(()=>{
-        alert("Enviat correctament!");
-      }).catch(err=>{
-        alert("Error enviant: "+JSON.stringify(err));
-      });
-    }
-  </script></body>
+  // Obrir PDF segons dia
+  function openPDF(){
+    const day = currentDate.getDay();
+    let pdfFile = "pdf-extra.pdf";
+    if(day===1||day===6) pdfFile="pdf-propioceptiu.pdf";
+    if(day===4||day===0) pdfFile="pdf-forca.pdf";
+    window.open(pdfFile,"_blank");
+  }
+
+  // TA popup
+  function openTAPopup(){ document.getElementById("taPopup").style.display="flex"; }
+  function closeTAPopup(){ document.getElementById("taPopup").style.display="none"; }
+  function saveTA(){
+    const dateKey = currentDate.toDateString();
+    taData[dateKey]=[
+      document.getElementById("ta1").value,
+      document.getElementById("ta2").value,
+      document.getElementById("ta3").value
+    ];
+    closeTAPopup();
+  }
+
+  // Reinici popup
+  function openResetPopup(){ document.getElementById("resetPopup").style.display="flex"; }
+  function closeResetPopup(){ document.getElementById("resetPopup").style.display="none"; }
+  function confirmReset(){
+    habitsData={}; taData={};
+    closeResetPopup();
+    // refrescar la pàgina per reiniciar com primera vegada
+    location.reload();
+  }
+
+  // Enviar EmailJS
+  function sendEmail(){
+    const dateKey = currentDate.toDateString();
+    const selectedHabits = habitsData[dateKey]? habitsData[dateKey].join(", "):"Cap";
+    const taValues = taData[dateKey]? taData[dateKey].join(" / "):"No registrat";
+
+    emailjs.send("service_4arkufe","template_88plg5s",{
+      user_email:"saluticures@gmail.com",
+      dia: dateKey,
+      habits:selectedHabits,
+      ta: taValues
+    }).then(res=>{ alert("Email enviat correctament!"); console.log(res); })
+      .catch(err=>{ alert("Error enviant: "+JSON.stringify(err)); console.error(err); });
+  }
+
+  updateDayLabel();
+</script>
+
+</body>
 </html>
