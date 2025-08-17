@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>App Hàbits</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      text-align: center;
+    }
+
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 40px;
+      margin-bottom: 100px;
+    }
+
+    .habit-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-left: 20px;
+    }
+
+    .habit-row {
+      margin-bottom: 15px;
+    }
+
+    .habit {
+      width: 150px;
+      height: 150px;
+      border-radius: 80%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 20px;
+      cursor: pointer;
+      border: 8px solid currentColor;
+      background-color: white;
+      color: inherit;
+      font-weight: bold;
+    }
+
+    .habit.active {
+      background-color: currentColor;
+      color: white;
+    }
+
+    .habit-label {
+      margin-left: 10px;
+      font-size: 50px;
+    }
+
+    .send-btn {
+      margin-top: 30px;
+      padding: 40px 80px;
+      font-size: 30px;
+      cursor: pointer;
+    }
+
+    .pdf-btn {
+      margin-top: 30px;
+      display: inline-block;
+      padding: 30px;
+      border: 4px solid #333;
+      cursor: pointer;
+    }
+
+    /* --- Modal per la TA --- */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background: rgba(0,0,0,0.6);
+    }
+    .modal-content {
+      background: white;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 80%;
+      max-width: 500px;
+      text-align: center;
+    }
+    .modal-content input {
+      width: 60px;
+      padding: 10px;
+      margin: 5px;
+      font-size: 20px;
+      text-align: center;
+    }
+    .close {
+      color: red;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #photoPreview {
+      margin-top: 10px;
+      max-width: 100%;
+    }
+
+    /* Pantalla inicial */
+    #startScreen {
+      display: block;
+    }
+    #appScreen {
+      display: none;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+</head>
+<body>
+  <!-- Pantalla inicial -->
+  <div id="startScreen">
+    <h1>Inicia sessió</h1>
+    <input type="text" id="userCode" placeholder="Codi"><br><br>
+    <input type="email" id="userEmail" placeholder="Correu"><br><br>
+    <button onclick="startApp()">Entrar</button>
+  </div>
+
+  <!-- Pantalla principal -->
+  <div id="appScreen">
+    <div class="day-header">
+      <button onclick="prevDay()">⬅</button>
+      <span id="dayLabel"></span>
+      <button onclick="nextDay()">➡</button>
+    </div>
+
+    <div class="habit-container">
+      <div class="habit-row">
+        <button class="habit" data-color="gold" data-habit="exercici">E</button>
+        <span class="habit-label">Exercici</span>
+      </div>
+      <div class="habit-row">
+        <button class="habit" data-color="green" data-habit="medicacio">M</button>
+        <span class="habit-label">Prendre medicació</span>
+      </div>
+      <div class="habit-row">
+        <button class="habit" data-color="blue" data-habit="fruites">F</button>
+        <span class="habit-label">Menjar 5 fruites o verdures</span>
+      </div>
+      <div class="habit-row">
+        <button class="habit" data-color="purple" data-habit="passes">P</button>
+        <span class="habit-label">Caminar 8000 passes</span>
+      </div>
+    </div>
+
+    <div class="pdf-btn" onclick="openPDF()">📄 Veure PDF</div>
+    <div class="pdf-btn" onclick="openTAModal()">🩺 Afegir TA</div>
+
+    <button class="send-btn" onclick="sendEmail()">✉ Enviar</button>
+    <button class="send-btn" onclick="restartApp()">🔄 Reiniciar</button>
+  </div>
+
+  <!-- Modal TA -->
+  <div id="taModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeTAModal()">&times;</span>
+      <h2>Afegir TA</h2>
+      <input type="number" id="taSistolica" placeholder="Sistòlica">
+      <input type="number" id="taDiastolica" placeholder="Diastòlica">
+      <input type="number" id="taFreq" placeholder="Freq.">
+      <br><br>
+      <input type="file" id="photoInput" accept="image/*" onchange="previewPhoto(event)">
+      <img id="photoPreview">
+      <br><br>
+      <button onclick="closeTAModal()">Guardar</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      emailjs.init("Ii-pS-x9zkGqnawB7");
+    })();
+
+    let currentDate = new Date();
+    let habitsData = {};
+    let userEmail = "";
+    let taData = { sistolica: "", diastolica: "", freq: "", foto: "" };
+
+    // Pantalla inicial
+    function startApp() {
+      userEmail = document.getElementById("userEmail").value;
+      document.getElementById("startScreen").style.display = "none";
+      document.getElementById("appScreen").style.display = "block";
+      updateDayLabel();
+    }
+
+    function restartApp() {
+      document.getElementById("appScreen").style.display = "none";
+      document.getElementById("startScreen").style.display = "block";
+    }
+
+    // Dia
+    function updateDayLabel() {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById("dayLabel").innerText = currentDate.toLocaleDateString("ca-ES", options);
+      loadHabits();
+    }
+    function prevDay() {
+      currentDate.setDate(currentDate.getDate() - 1);
+      updateDayLabel();
+    }
+    function nextDay() {
+      currentDate.setDate(currentDate.getDate() + 1);
+      updateDayLabel();
+    }
+
+    // Hàbits
+    function loadHabits() {
+      const dateKey = currentDate.toDateString();
+      document.querySelectorAll(".habit").forEach(btn => {
+        btn.style.color = btn.dataset.color;
+        btn.classList.remove("active");
+        if (habitsData[dateKey] && habitsData[dateKey].includes(btn.dataset.habit)) {
+          btn.classList.add("active");
+        }
+      });
+    }
+    document.querySelectorAll(".habit").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const dateKey = currentDate.toDateString();
+        if (!habitsData[dateKey]) habitsData[dateKey] = [];
+        if (btn.classList.contains("active")) {
+          btn.classList.remove("active");
+          habitsData[dateKey] = habitsData[dateKey].filter(h => h !== btn.dataset.habit);
+        } else {
+          btn.classList.add("active");
+          habitsData[dateKey].push(btn.dataset.habit);
+        }
+      });
+    });
+
+    // PDF
+    function openPDF() {
+      const day = currentDate.getDay();
+      let pdfFile = "pdf-extra.pdf";
+      if (day === 1 || day === 6) pdfFile = "pdf-propioceptiu.pdf";
+      if (day === 4 || day === 0) pdfFile = "pdf-forca.pdf";
+      window.open(pdfFile, "_blank");
+    }
+
+    // Modal TA
+    function openTAModal() {
+      document.getElementById("taModal").style.display = "block";
+    }
+    function closeTAModal() {
+      taData.sistolica = document.getElementById("taSistolica").value;
+      taData.diastolica = document.getElementById("taDiastolica").value;
+      taData.freq = document.getElementById("taFreq").value;
+      document.getElementById("taModal").style.display = "none";
+    }
+    function previewPhoto(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          document.getElementById("photoPreview").src = e.target.result;
+          taData.foto = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Email
+    function sendEmail() {
+      const dateKey = currentDate.toDateString();
+      const selectedHabits = habitsData[dateKey] ? habitsData[dateKey].join(", ") : "Cap";
+
+      emailjs.send("service_4arkufe", "template_88plg5s", {
+        user_email: "saluticures@gmail.com",
+        dia: dateKey,
+        habits: selectedHabits,
+        ta: `TA: ${taData.sistolica}/${taData.diastolica}, Freq: ${taData.freq}`,
+        foto: taData.foto || "Sense foto"
+      }).then(response => {
+        alert("Email enviat correctament!");
+      }).catch(error => {
+        alert("Error enviant: " + JSON.stringify(error));
+      });
+    }
+
+    // Inicialitzar
+    updateDayLabel();
+  </script>
+</body>
+</html>
